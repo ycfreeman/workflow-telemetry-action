@@ -6,8 +6,6 @@ import {
   CPUStats,
   DiskSizeStats,
   DiskStats,
-  GraphResponse,
-  LineGraphOptions,
   MemoryStats,
   NetworkStats,
   ProcessedCPUStats,
@@ -16,11 +14,10 @@ import {
   ProcessedMemoryStats,
   ProcessedNetworkStats,
   ProcessedStats,
-  StackedAreaGraphOptions,
   WorkflowJobType
 } from './interfaces'
 import * as logger from './logger'
-import { log } from 'console'
+import { getLineGraph, getStackedAreaGraph } from './graphing'
 
 const STAT_SERVER_PORT = 7777
 
@@ -57,7 +54,7 @@ async function reportWorkflowMetrics(): Promise<string> {
   const { diskReadX, diskWriteX } = await getDiskStats()
   const { diskAvailableX, diskUsedX } = await getDiskSizeStats()
 
-  const cpuLoad =
+  const cpuLoadContent =
     userLoadX && userLoadX.length && systemLoadX && systemLoadX.length
       ? await getStackedAreaGraph({
           label: 'CPU Load (%)',
@@ -77,7 +74,7 @@ async function reportWorkflowMetrics(): Promise<string> {
         })
       : null
 
-  const memoryUsage =
+  const memoryUsageContent =
     activeMemoryX &&
     activeMemoryX.length &&
     availableMemoryX &&
@@ -100,7 +97,7 @@ async function reportWorkflowMetrics(): Promise<string> {
         })
       : null
 
-  const networkIORead =
+  const networkIOReadContent =
     networkReadX && networkReadX.length
       ? await getLineGraph({
           label: 'Network I/O Read (MB)',
@@ -113,7 +110,7 @@ async function reportWorkflowMetrics(): Promise<string> {
         })
       : null
 
-  const networkIOWrite =
+  const networkIOWriteContent =
     networkWriteX && networkWriteX.length
       ? await getLineGraph({
           label: 'Network I/O Write (MB)',
@@ -126,7 +123,7 @@ async function reportWorkflowMetrics(): Promise<string> {
         })
       : null
 
-  const diskIORead =
+  const diskIOReadContent =
     diskReadX && diskReadX.length
       ? await getLineGraph({
           label: 'Disk I/O Read (MB)',
@@ -139,7 +136,7 @@ async function reportWorkflowMetrics(): Promise<string> {
         })
       : null
 
-  const diskIOWrite =
+  const diskIOWriteContent =
     diskWriteX && diskWriteX.length
       ? await getLineGraph({
           label: 'Disk I/O Write (MB)',
@@ -152,7 +149,7 @@ async function reportWorkflowMetrics(): Promise<string> {
         })
       : null
 
-  const diskSizeUsage =
+  const diskSizeUsageContent =
     diskUsedX && diskUsedX.length && diskAvailableX && diskAvailableX.length
       ? await getStackedAreaGraph({
           label: 'Disk Usage (MB)',
@@ -173,43 +170,44 @@ async function reportWorkflowMetrics(): Promise<string> {
       : null
 
   const postContentItems: string[] = []
-  if (cpuLoad) {
+  if (cpuLoadContent) {
+    postContentItems.push('### CPU Metrics', '', cpuLoadContent, '')
+  }
+  if (memoryUsageContent) {
+    postContentItems.push('### Memory Metrics', '', memoryUsageContent, '')
+  }
+  if (
+    (networkIOReadContent && networkIOWriteContent) ||
+    (diskIOReadContent && diskIOWriteContent)
+  ) {
+    postContentItems.push('### IO Metrics', '')
+  }
+  if (networkIOReadContent && networkIOWriteContent) {
     postContentItems.push(
-      '### CPU Metrics',
-      `![${cpuLoad.id}](${cpuLoad.url})`,
+      `#### Network I/O (Read)`,
+      '',
+      networkIOReadContent,
+      '',
+      `#### Network I/O (Write)`,
+      '',
+      networkIOWriteContent,
       ''
     )
   }
-  if (memoryUsage) {
+  if (diskIOReadContent && diskIOWriteContent) {
     postContentItems.push(
-      '### Memory Metrics',
-      `![${memoryUsage.id}](${memoryUsage.url})`,
+      `#### Disk I/O (Read)`,
+      '',
+      diskIOReadContent,
+      '',
+      `#### Disk I/O (Write)`,
+      '',
+      diskIOWriteContent,
       ''
     )
   }
-  if ((networkIORead && networkIOWrite) || (diskIORead && diskIOWrite)) {
-    postContentItems.push(
-      '### IO Metrics',
-      '|               | Read      | Write     |',
-      '|---            |---        |---        |'
-    )
-  }
-  if (networkIORead && networkIOWrite) {
-    postContentItems.push(
-      `| Network I/O   | ![${networkIORead.id}](${networkIORead.url})        | ![${networkIOWrite.id}](${networkIOWrite.url})        |`
-    )
-  }
-  if (diskIORead && diskIOWrite) {
-    postContentItems.push(
-      `| Disk I/O      | ![${diskIORead.id}](${diskIORead.url})              | ![${diskIOWrite.id}](${diskIOWrite.url})              |`
-    )
-  }
-  if (diskSizeUsage) {
-    postContentItems.push(
-      '### Disk Size Metrics',
-      `![${diskSizeUsage.id}](${diskSizeUsage.url})`,
-      ''
-    )
+  if (diskSizeUsageContent) {
+    postContentItems.push('### Disk Size Metrics', '', diskSizeUsageContent, '')
   }
 
   return postContentItems.join('\n')
@@ -353,71 +351,6 @@ async function getDiskSizeStats(): Promise<ProcessedDiskSizeStats> {
   })
 
   return { diskAvailableX, diskUsedX }
-}
-
-async function getLineGraph(options: LineGraphOptions): Promise<GraphResponse> {
-  const payload = {
-    options: {
-      width: 1000,
-      height: 500,
-      xAxis: {
-        label: 'Time'
-      },
-      yAxis: {
-        label: options.label
-      },
-      timeTicks: {
-        unit: 'auto'
-      }
-    },
-    lines: [options.line]
-  }
-
-  let response = null
-  try {
-    response = await axios.put(
-      'https://api.globadge.com/v1/chartgen/line/time',
-      payload
-    )
-  } catch (error: any) {
-    logger.error(error)
-    logger.error(`getLineGraph ${JSON.stringify(payload)}`)
-  }
-
-  return response?.data
-}
-
-async function getStackedAreaGraph(
-  options: StackedAreaGraphOptions
-): Promise<GraphResponse> {
-  const payload = {
-    options: {
-      width: 1000,
-      height: 500,
-      xAxis: {
-        label: 'Time'
-      },
-      yAxis: {
-        label: options.label
-      },
-      timeTicks: {
-        unit: 'auto'
-      }
-    },
-    areas: options.areas
-  }
-
-  let response = null
-  try {
-    response = await axios.put(
-      'https://api.globadge.com/v1/chartgen/stacked-area/time',
-      payload
-    )
-  } catch (error: any) {
-    logger.error(error)
-    logger.error(`getStackedAreaGraph ${JSON.stringify(payload)}`)
-  }
-  return response?.data
 }
 
 ///////////////////////////

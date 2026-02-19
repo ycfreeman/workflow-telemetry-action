@@ -87,11 +87,6 @@ export interface StackedAreaGraphOptions {
   readonly areas: StackedArea[]
 }
 
-export interface GraphResponse {
-  readonly id: string
-  readonly url: string
-}
-
 export interface CompletedCommand {
   readonly ts: string
   readonly event: string
