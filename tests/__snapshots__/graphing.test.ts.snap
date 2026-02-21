@@ -6,7 +6,7 @@ exports[`getLineGraph > getLineGraph should return a graph response 1`] = `
 config:
   xyChart:
     width: 1200
-    height: 400
+    height: 250
     xAxis:
       labelFontSize: 10
       showLabel: false
@@ -28,7 +28,7 @@ exports[`getStackedAreaGraph > getStackedAreaGraph should return a graph respons
 config:
   xyChart:
     width: 1200
-    height: 400
+    height: 250
     xAxis:
       labelFontSize: 10
       showLabel: false

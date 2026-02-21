@@ -39254,7 +39254,7 @@ function getLineGraph(options) {
         const payload = {
             options: {
                 width: 1200,
-                height: 400,
+                height: 250,
                 xAxis: {
                     label: 'Time'
                 },
@@ -39298,7 +39298,7 @@ function getStackedAreaGraph(options) {
         const payload = {
             options: {
                 width: 1200,
-                height: 400,
+                height: 250,
                 xAxis: {
                     label: 'Time'
                 },
