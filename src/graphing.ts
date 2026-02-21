@@ -18,7 +18,7 @@ export async function getLineGraph(options: LineGraphOptions): Promise<string> {
   const payload = {
     options: {
       width: 1200,
-      height: 250,
+      height: 350,
       xAxis: {
         label: 'Time'
       },
@@ -67,7 +67,7 @@ export async function getStackedAreaGraph(
   const payload = {
     options: {
       width: 1200,
-      height: 250,
+      height: 350,
       xAxis: {
         label: 'Time'
       },
