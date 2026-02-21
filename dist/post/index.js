@@ -39333,7 +39333,13 @@ config:
       showTick: true
   themeVariables:
     xyChart:
-      plotColorPalette: '${payload.areas.flatMap((area, i) => [area.color, `${area.color.substring(0, 7)}${(100 - (50 / payload.areas.length) * (i + 1) - 10 * (i + 1)).toFixed(0)}`]).join(', ')}'
+      plotColorPalette: '${[...payload.areas]
+            .reverse()
+            .flatMap((area, i) => [
+            area.color,
+            `${area.color.substring(0, 7)}${((50 / payload.areas.length) * (i + 1) + 10 * (i + 1)).toFixed(0)}`
+        ])
+            .join(', ')}'
 ---
 xychart
   x-axis "${payload.options.xAxis.label}" [${firstArea.points
@@ -39341,11 +39347,13 @@ xychart
             .map(time => `"${time}"`)
             .join(', ')}]
   y-axis "${payload.options.yAxis.label}"
-  ${stackedBars.flatMap(bar => [`line [${bar.join(', ')}]`, `bar [${bar.join(', ')}]`]).join('\n  ')}
+  ${[...stackedBars]
+            .reverse()
+            .flatMap(bar => [`line [${bar.join(', ')}]`, `bar [${bar.join(', ')}]`])
+            .join('\n  ')}
 \`\`\`
 ${payload.areas.map(area => `${formatPlaceHolderImage(area.label, area.color)} **${area.label}**`).join('\n')}
 `;
-        //  ${stackedBars.map((bar, index) => `bar [${bar.join(', ')}]`).join('\n  ')}
         return chartContent.trim();
     });
 }
