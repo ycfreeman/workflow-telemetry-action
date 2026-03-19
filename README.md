@@ -1,6 +1,8 @@
 # workflow-telemetry-action
 
 > Due to the upstream project being stale -- https://github.com/catchpoint/workflow-telemetry-action/issues/101#issuecomment-3929022931, this fork contains an alternative implementation of the chart that uses GFM mermaid, removing the dependency of external charting service, however it does have some limitations
+> Mermaid implementation is inspired by https://github.com/dev-hato/actions-workflow-metrics, a big chuck of AI, and some tweaking to make it look good to me
+> This is good enough to solve my use case, hopefully it would be enough for yours
 
 A GitHub Action to track and monitor the 
 - workflow runs, jobs and steps
