@@ -1,11 +1,14 @@
-name: tag-v2
+name: tag
 
 on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Tag name"
+        description: 'Sha or tag to be tagged as v3'
         required: true
+
+env:
+  TARGET_TAG: v3
 
 jobs:
   build:
@@ -18,7 +21,7 @@ jobs:
         run: |
           git config --global user.email "action@github.com"
           git config --global user.name "GitHub Action"
-      - name: Tag ${{ github.event.inputs.tag }} as v2
+      - name: Tag ${{ github.event.inputs.tag }} as ${{ env.TARGET_TAG }}
         run: |
-          git tag v2 -f
+          git tag ${{ env.TARGET_TAG }} -f
           git push origin --tags -f
